@@ -1,6 +1,6 @@
 -- =====================================================
 -- JCI DANANG JUNIOR CLUB - ZODIAC HR MANAGEMENT SYSTEM
--- Initial Database Schema
+-- Initial Database Schema (FIXED)
 -- Vice President: Membership & Training ♐
 -- =====================================================
 
@@ -26,7 +26,7 @@ CREATE TABLE users (
     INDEX idx_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Table 2: members (JCI Members)
+-- Table 2: members (JCI Members) - FIXED ENUM VALUES
 CREATE TABLE members (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     member_code VARCHAR(20) UNIQUE NOT NULL,
@@ -38,12 +38,12 @@ CREATE TABLE members (
                      'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces') NOT NULL,
     zodiac_element ENUM('Fire', 'Earth', 'Air', 'Water') NOT NULL,
 
-    -- JCI Specific
+    -- JCI Specific (FIXED: Match Java enum exactly)
     position VARCHAR(100),
     department_id BIGINT,
     join_date DATE NOT NULL,
-    membership_status ENUM('Active', 'Inactive', 'On Leave', 'Alumni') DEFAULT 'Active',
-    membership_type ENUM('Full Member', 'Associate', 'Honorary') DEFAULT 'Full Member',
+    membership_status ENUM('Active', 'Inactive', 'OnLeave', 'Alumni') DEFAULT 'Active',
+    membership_type ENUM('FullMember', 'Associate', 'Honorary') DEFAULT 'FullMember',
 
     -- Contact & Personal
     avatar_url VARCHAR(500),
@@ -188,7 +188,7 @@ ALTER TABLE departments
 INSERT INTO users (username, password, full_name, email, date_of_birth, zodiac_sign, position)
 VALUES (
     'admin',
-    '$2a$10$dummyHashForNow', -- Will be updated with actual BCrypt hash
+    '$2a$10$dummyHashForNow',
     'Vice President - Membership & Training',
     'vp.membership@jcidanang.com',
     '2003-12-04',
