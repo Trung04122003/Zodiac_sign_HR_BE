@@ -32,6 +32,8 @@ public class ReportService {
     private final ZodiacCompatibilityRepository compatibilityRepository;
     private final CompatibilityService compatibilityService;
     private final ZodiacUtilityService zodiacUtilityService;
+    private final PdfExportService pdfExportService;
+    private final ExcelExportService excelExportService;
 
     /**
      * Get zodiac analytics report
@@ -253,33 +255,67 @@ public class ReportService {
     }
 
     /**
-     * Generate PDF report (placeholder - requires PDF library)
+     * Generate PDF report (using PdfExportService)
      */
     public byte[] generatePdfReport(GenerateReportRequest request) {
         log.info("Generating PDF report: {}", request.getReportType());
 
-        // TODO: Implement PDF generation using iText or Apache PDFBox
-        // For now, return placeholder
-        String placeholder = "PDF Report Generation - Coming Soon!\n" +
-                "Report Type: " + request.getReportType() + "\n" +
-                "Generated: " + LocalDate.now();
-
-        return placeholder.getBytes();
+        try {
+            return switch (request.getReportType().toUpperCase()) {
+                case "ZODIAC_ANALYTICS" -> {
+                    ZodiacAnalyticsResponse data = getZodiacAnalytics();
+                    yield pdfExportService.generateZodiacAnalyticsPdf(data);
+                }
+                case "DEPARTMENT_COMPOSITION" -> {
+                    DepartmentCompositionResponse data = getDepartmentComposition(request.getDepartmentId());
+                    yield pdfExportService.generateDepartmentCompositionPdf(data);
+                }
+                case "FUN_STATS" -> {
+                    FunStatsResponse data = getFunStats();
+                    yield pdfExportService.generateFunStatsPdf(data);
+                }
+                case "COMPATIBILITY", "PAIR", "TEAM", "DEPARTMENT" -> {
+                    CompatibilityReport data = generateCompatibilityReport(request);
+                    yield pdfExportService.generateCompatibilityReportPdf(data);
+                }
+                default -> throw new BadRequestException("Invalid report type for PDF export: " + request.getReportType());
+            };
+        } catch (Exception e) {
+            log.error("Error generating PDF: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate PDF report: " + e.getMessage(), e);
+        }
     }
 
     /**
-     * Generate Excel report (placeholder - requires Apache POI)
+     * Generate Excel report (using ExcelExportService)
      */
     public byte[] generateExcelReport(GenerateReportRequest request) {
         log.info("Generating Excel report: {}", request.getReportType());
 
-        // TODO: Implement Excel generation using Apache POI
-        // For now, return placeholder
-        String placeholder = "Excel Report Generation - Coming Soon!\n" +
-                "Report Type: " + request.getReportType() + "\n" +
-                "Generated: " + LocalDate.now();
-
-        return placeholder.getBytes();
+        try {
+            return switch (request.getReportType().toUpperCase()) {
+                case "ZODIAC_ANALYTICS" -> {
+                    ZodiacAnalyticsResponse data = getZodiacAnalytics();
+                    yield excelExportService.generateZodiacAnalyticsExcel(data);
+                }
+                case "DEPARTMENT_COMPOSITION" -> {
+                    DepartmentCompositionResponse data = getDepartmentComposition(request.getDepartmentId());
+                    yield excelExportService.generateDepartmentCompositionExcel(data);
+                }
+                case "FUN_STATS" -> {
+                    FunStatsResponse data = getFunStats();
+                    yield excelExportService.generateFunStatsExcel(data);
+                }
+                case "COMPATIBILITY_MATRIX" -> {
+                    CompatibilityMatrixResponse data = getCompatibilityMatrixForReport(request.getDepartmentId(), 20);
+                    yield excelExportService.generateCompatibilityMatrixExcel(data);
+                }
+                default -> throw new BadRequestException("Invalid report type for Excel export: " + request.getReportType());
+            };
+        } catch (Exception e) {
+            log.error("Error generating Excel: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate Excel report: " + e.getMessage(), e);
+        }
     }
 
     /**
