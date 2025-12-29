@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,14 +73,86 @@ public interface MemberRepository extends JpaRepository<Member, Long>,
 
     // ==================== Birthday Queries ====================
 
+    /**
+     * Find members with birthday on specific month and day
+     */
     @Query("SELECT m FROM Member m WHERE FUNCTION('MONTH', m.dateOfBirth) = :month " +
-            "AND FUNCTION('DAY', m.dateOfBirth) = :day")
+            "AND FUNCTION('DAY', m.dateOfBirth) = :day " +
+            "AND m.membershipStatus = 'Active'")
     List<Member> findByBirthday(@Param("month") int month, @Param("day") int day);
 
     @Query("SELECT m FROM Member m WHERE m.dateOfBirth BETWEEN :startDate AND :endDate " +
             "ORDER BY FUNCTION('MONTH', m.dateOfBirth), FUNCTION('DAY', m.dateOfBirth)")
     List<Member> findUpcomingBirthdays(@Param("startDate") LocalDate startDate,
                                        @Param("endDate") LocalDate endDate);
+
+    /**
+     * Find members with birthdays between two dates
+     */
+    @Query("SELECT m FROM Member m WHERE " +
+            "(FUNCTION('MONTH', m.dateOfBirth) > :startMonth OR " +
+            "(FUNCTION('MONTH', m.dateOfBirth) = :startMonth AND FUNCTION('DAY', m.dateOfBirth) >= :startDay)) " +
+            "AND (FUNCTION('MONTH', m.dateOfBirth) < :endMonth OR " +
+            "(FUNCTION('MONTH', m.dateOfBirth) = :endMonth AND FUNCTION('DAY', m.dateOfBirth) <= :endDay)) " +
+            "AND m.membershipStatus = 'Active' " +
+            "ORDER BY FUNCTION('MONTH', m.dateOfBirth), FUNCTION('DAY', m.dateOfBirth)")
+    List<Member> findUpcomingBirthdaysInRange(@Param("startMonth") int startMonth,
+                                              @Param("startDay") int startDay,
+                                              @Param("endMonth") int endMonth,
+                                              @Param("endDay") int endDay);
+
+    /**
+     * Find members with birthdays in a specific month
+     */
+    @Query("SELECT m FROM Member m WHERE FUNCTION('MONTH', m.dateOfBirth) = :month " +
+            "AND m.membershipStatus = 'Active' " +
+            "ORDER BY FUNCTION('DAY', m.dateOfBirth)")
+    List<Member> findByBirthMonth(@Param("month") int month);
+
+    /**
+     * Find members with birthdays today
+     * Used by: BirthdayNotificationService.checkBirthdaysToday()
+     */
+    default List<Member> findMembersWithBirthdayToday() {
+        LocalDate today = LocalDate.now();
+        return findByBirthday(today.getMonthValue(), today.getDayOfMonth());
+    }
+
+    /**
+     * Find members with upcoming birthdays in next N days
+     * Used by: BirthdayNotificationService.checkUpcomingBirthdays()
+     */
+    default List<Member> findMembersWithUpcomingBirthdays(int daysAhead) {
+        LocalDate today = LocalDate.now();
+        LocalDate endDate = today.plusDays(daysAhead);
+
+        // Handle year wrap-around (e.g., Dec 25 + 10 days = Jan 4)
+        if (endDate.getYear() > today.getYear()) {
+            // Split into two queries: rest of this year + beginning of next year
+            List<Member> result = findUpcomingBirthdaysInRange(
+                    today.getMonthValue(), today.getDayOfMonth(),
+                    12, 31
+            );
+            result.addAll(findUpcomingBirthdaysInRange(
+                    1, 1,
+                    endDate.getMonthValue(), endDate.getDayOfMonth()
+            ));
+            return result;
+        } else {
+            return findUpcomingBirthdaysInRange(
+                    today.getMonthValue(), today.getDayOfMonth(),
+                    endDate.getMonthValue(), endDate.getDayOfMonth()
+            );
+        }
+    }
+
+    /**
+     * Find members with birthdays in a specific month
+     * Used by: BirthdayNotificationService.monthlyBirthdayReport()
+     */
+    default List<Member> findMembersByBirthMonth(Month month) {
+        return findByBirthMonth(month.getValue());
+    }
 
     // ==================== Statistics ====================
 
