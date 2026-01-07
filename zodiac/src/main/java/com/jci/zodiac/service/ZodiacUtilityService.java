@@ -323,7 +323,6 @@ public class ZodiacUtilityService {
         }
 
         Map<Member.ZodiacElement, Long> elementBalance = calculateElementBalance(members);
-        Member.ZodiacSign mostCommon = getMostCommonZodiacSign(members);
 
         long fireCount = elementBalance.get(Member.ZodiacElement.Fire);
         long earthCount = elementBalance.get(Member.ZodiacElement.Earth);
