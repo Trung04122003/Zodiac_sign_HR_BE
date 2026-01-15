@@ -8,14 +8,21 @@ import com.jci.zodiac.entity.Member;
 import com.jci.zodiac.util.ZodiacCalculator;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
 /**
- * Mapper for converting between Member entity and DTOs
+ * MemberMapper - Converts between Member Entity and DTOs
+ * Handles zodiac calculations and computed fields
  */
 @Component
 public class MemberMapper {
 
+    // ==================== Request DTOs → Entity ====================
+
     /**
      * Convert CreateMemberRequest to Member entity
+     * Auto-calculates zodiac sign and element from dateOfBirth
      */
     public Member toEntity(CreateMemberRequest request) {
         if (request == null) {
@@ -37,9 +44,8 @@ public class MemberMapper {
                 .city(request.getCity())
                 .emergencyContact(request.getEmergencyContact())
                 .emergencyPhone(request.getEmergencyPhone())
-                .occupation(request.getOccupation())
-                .company(request.getCompany())
-                .linkedinUrl(request.getLinkedinUrl())
+                .facebookUrl(request.getFacebookUrl())
+                .company("JCI Danang Junior Club")
                 .notes(request.getNotes())
                 .tags(request.getTags())
                 .build();
@@ -54,7 +60,8 @@ public class MemberMapper {
     }
 
     /**
-     * Update Member entity from UpdateMemberRequest
+     * Update existing Member entity from UpdateMemberRequest
+     * Only updates non-null fields (partial update)
      */
     public void updateEntity(Member member, UpdateMemberRequest request) {
         if (request == null || member == null) {
@@ -106,14 +113,8 @@ public class MemberMapper {
         if (request.getEmergencyPhone() != null) {
             member.setEmergencyPhone(request.getEmergencyPhone());
         }
-        if (request.getOccupation() != null) {
-            member.setOccupation(request.getOccupation());
-        }
-        if (request.getCompany() != null) {
-            member.setCompany(request.getCompany());
-        }
-        if (request.getLinkedinUrl() != null) {
-            member.setLinkedinUrl(request.getLinkedinUrl());
+        if (request.getFacebookUrl() != null) {
+            member.setFacebookUrl(request.getFacebookUrl());
         }
         if (request.getNotes() != null) {
             member.setNotes(request.getNotes());
@@ -123,8 +124,11 @@ public class MemberMapper {
         }
     }
 
+    // ==================== Entity → Response DTOs ====================
+
     /**
-     * Convert Member entity to MemberResponse (full details)
+     * Convert Member entity to full MemberResponse
+     * Includes all computed fields
      */
     public MemberResponse toResponse(Member member) {
         if (member == null) {
@@ -141,6 +145,8 @@ public class MemberMapper {
                 .zodiacSign(member.getZodiacSign().name())
                 .zodiacElement(member.getZodiacElement().name())
                 .zodiacSymbol(ZodiacCalculator.getSymbol(member.getZodiacSign()))
+                .zodiacDateRange(ZodiacCalculator.getDateRange(member.getZodiacSign()))
+                .elementSymbol(ZodiacCalculator.getElementSymbol(member.getZodiacElement()))
                 .position(member.getPosition())
                 .departmentId(member.getDepartmentId())
                 .joinDate(member.getJoinDate())
@@ -151,21 +157,25 @@ public class MemberMapper {
                 .city(member.getCity())
                 .emergencyContact(member.getEmergencyContact())
                 .emergencyPhone(member.getEmergencyPhone())
-                .occupation(member.getOccupation())
-                .company(member.getCompany())
-                .linkedinUrl(member.getLinkedinUrl())
+                .facebookUrl(member.getFacebookUrl())
                 .notes(member.getNotes())
                 .tags(member.getTags())
                 .createdAt(member.getCreatedAt())
                 .updatedAt(member.getUpdatedAt())
-                .age(member.getAge())
-                .daysSinceJoined(member.getDaysSinceJoined())
+                .createdBy(member.getCreatedBy())
+                // Computed fields
+                .age(calculateAge(member.getDateOfBirth()))
+                .daysSinceJoined(calculateDaysSinceJoined(member.getJoinDate()))
                 .isActive(member.isActive())
+                .isBirthdayToday(isBirthdayToday(member.getDateOfBirth()))
+                .daysUntilBirthday(calculateDaysUntilBirthday(member.getDateOfBirth()))
+                .elementDescription(getElementDescription(member.getZodiacElement()))
                 .build();
     }
 
     /**
-     * Convert Member entity to MemberSummaryResponse (list view)
+     * Convert Member entity to MemberSummaryResponse
+     * Lightweight version for list views
      */
     public MemberSummaryResponse toSummaryResponse(Member member) {
         if (member == null) {
@@ -179,12 +189,71 @@ public class MemberMapper {
                 .email(member.getEmail())
                 .position(member.getPosition())
                 .zodiacSign(member.getZodiacSign().name())
-                .zodiacSymbol(ZodiacCalculator.getSymbol(member.getZodiacSign()))
                 .zodiacElement(member.getZodiacElement().name())
+                .zodiacSymbol(ZodiacCalculator.getSymbol(member.getZodiacSign()))
+                .elementSymbol(ZodiacCalculator.getElementSymbol(member.getZodiacElement()))
                 .avatarUrl(member.getAvatarUrl())
                 .membershipStatus(member.getMembershipStatus().name())
                 .joinDate(member.getJoinDate())
                 .isActive(member.isActive())
+                .departmentId(member.getDepartmentId())
+                // Computed fields
+                .age(calculateAge(member.getDateOfBirth()))
+                .daysSinceJoined(calculateDaysSinceJoined(member.getJoinDate()))
+                .isBirthdayToday(isBirthdayToday(member.getDateOfBirth()))
+                .isBirthdayThisWeek(isBirthdayThisWeek(member.getDateOfBirth()))
                 .build();
+    }
+
+    // ==================== Helper Methods ====================
+
+    private Integer calculateAge(LocalDate dateOfBirth) {
+        if (dateOfBirth == null) return null;
+        return (int) ChronoUnit.YEARS.between(dateOfBirth, LocalDate.now());
+    }
+
+    private Long calculateDaysSinceJoined(LocalDate joinDate) {
+        if (joinDate == null) return null;
+        return ChronoUnit.DAYS.between(joinDate, LocalDate.now());
+    }
+
+    private Boolean isBirthdayToday(LocalDate dateOfBirth) {
+        if (dateOfBirth == null) return false;
+        LocalDate today = LocalDate.now();
+        return dateOfBirth.getMonth() == today.getMonth() &&
+                dateOfBirth.getDayOfMonth() == today.getDayOfMonth();
+    }
+
+    private Boolean isBirthdayThisWeek(LocalDate dateOfBirth) {
+        if (dateOfBirth == null) return false;
+        LocalDate today = LocalDate.now();
+        LocalDate nextWeek = today.plusDays(7);
+
+        LocalDate birthdayThisYear = LocalDate.of(today.getYear(),
+                dateOfBirth.getMonth(), dateOfBirth.getDayOfMonth());
+
+        return !birthdayThisYear.isBefore(today) && !birthdayThisYear.isAfter(nextWeek);
+    }
+
+    private Integer calculateDaysUntilBirthday(LocalDate dateOfBirth) {
+        if (dateOfBirth == null) return null;
+        LocalDate today = LocalDate.now();
+        LocalDate nextBirthday = LocalDate.of(today.getYear(),
+                dateOfBirth.getMonth(), dateOfBirth.getDayOfMonth());
+
+        if (nextBirthday.isBefore(today)) {
+            nextBirthday = nextBirthday.plusYears(1);
+        }
+
+        return (int) ChronoUnit.DAYS.between(today, nextBirthday);
+    }
+
+    private String getElementDescription(Member.ZodiacElement element) {
+        return switch (element) {
+            case Fire -> "Fire signs are passionate, dynamic, and temperamental. They get angry quickly, but they also forgive easily.";
+            case Earth -> "Earth signs are grounded, practical, and reliable. They are the builders and creators of the zodiac.";
+            case Air -> "Air signs are intellectual, communicative, and social. They love to analyze, synthesize, and probe.";
+            case Water -> "Water signs are emotional, intuitive, and deeply connected to their subconscious.";
+        };
     }
 }

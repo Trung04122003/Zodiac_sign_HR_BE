@@ -12,12 +12,16 @@ import java.util.List;
 
 /**
  * DTO for updating an existing member
+ * All fields are optional (partial update support)
+ * Auto-recalculates zodiacSign and zodiacElement if dateOfBirth changes
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class UpdateMemberRequest {
+
+    // ==================== Basic Information ====================
 
     @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
     private String fullName;
@@ -31,7 +35,14 @@ public class UpdateMemberRequest {
     @Past(message = "Date of birth must be in the past")
     private LocalDate dateOfBirth;
 
-    // JCI Specific
+    // ==================== Zodiac Information (READ-ONLY) ====================
+    // Auto-recalculated if dateOfBirth is updated
+
+    private Member.ZodiacSign zodiacSign;
+    private Member.ZodiacElement zodiacElement;
+
+    // ==================== JCI Specific ====================
+
     private String position;
 
     private Long departmentId;
@@ -42,7 +53,8 @@ public class UpdateMemberRequest {
 
     private Member.MembershipType membershipType;
 
-    // Contact & Personal
+    // ==================== Contact & Personal ====================
+
     private String avatarUrl;
 
     @Size(max = 500, message = "Address must not exceed 500 characters")
@@ -54,16 +66,14 @@ public class UpdateMemberRequest {
 
     private String emergencyPhone;
 
-    // Professional
-    private String occupation;
+    // ==================== Social Media ====================
 
-    private String company;
+    @Pattern(regexp = "^(https?://)?(www\\.)?(facebook|fb)\\.com/.*$",
+            message = "Facebook URL must be valid")
+    private String facebookUrl;
 
-    @Pattern(regexp = "^(https?://)?([\\w]+\\.)?linkedin\\.com/.*$",
-            message = "LinkedIn URL must be valid")
-    private String linkedinUrl;
+    // ==================== Metadata ====================
 
-    // Metadata
     private String notes;
 
     private List<String> tags;

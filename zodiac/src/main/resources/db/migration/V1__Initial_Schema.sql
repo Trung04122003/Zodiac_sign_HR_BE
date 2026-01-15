@@ -52,10 +52,9 @@ CREATE TABLE members (
     emergency_contact VARCHAR(100),
     emergency_phone VARCHAR(20),
 
-    -- Professional
-    occupation VARCHAR(100),
+    -- Social Media
+    facebook_url VARCHAR(200),
     company VARCHAR(100),
-    linkedin_url VARCHAR(200),
 
     -- Metadata
     notes TEXT,
@@ -70,7 +69,8 @@ CREATE TABLE members (
     INDEX idx_zodiac_element (zodiac_element),
     INDEX idx_status (membership_status),
     INDEX idx_join_date (join_date),
-    FULLTEXT INDEX idx_fulltext_search (full_name, email, position, occupation)
+    INDEX idx_facebook_url (facebook_url),
+    FULLTEXT INDEX idx_fulltext_search (full_name, email, position, company)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Table 3: departments (JCI Committees/Teams)

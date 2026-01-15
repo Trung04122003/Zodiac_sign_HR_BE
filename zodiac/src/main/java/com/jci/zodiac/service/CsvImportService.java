@@ -145,7 +145,7 @@ public class CsvImportService {
                             .dateOfBirth(dateOfBirth)
                             .position(position != null && !position.trim().isEmpty() ? position.trim() : null)
                             .joinDate(joinDate)
-                            .occupation(occupation != null && !occupation.trim().isEmpty() ? occupation.trim() : null)
+                            .position(occupation != null && !occupation.trim().isEmpty() ? occupation.trim() : null)
                             .city("Da Nang")
                             .build();
 

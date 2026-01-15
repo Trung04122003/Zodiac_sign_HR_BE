@@ -12,12 +12,15 @@ import java.util.List;
 
 /**
  * DTO for creating a new member
+ * Auto-calculates zodiacSign and zodiacElement from dateOfBirth in service layer
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class CreateMemberRequest {
+
+    // ==================== Basic Information ====================
 
     @NotBlank(message = "Full name is required")
     @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
@@ -33,40 +36,51 @@ public class CreateMemberRequest {
     @Past(message = "Date of birth must be in the past")
     private LocalDate dateOfBirth;
 
-    // JCI Specific
+    // ==================== Zodiac Information (READ-ONLY) ====================
+    // These fields are auto-calculated by backend from dateOfBirth
+    // Frontend can send these for validation but backend will override
+
+    private Member.ZodiacSign zodiacSign;
+    private Member.ZodiacElement zodiacElement;
+
+    // ==================== JCI Specific ====================
+
     private String position;
 
     private Long departmentId;
 
     @NotNull(message = "Join date is required")
-    private LocalDate joinDate;
+    @Builder.Default
+    private LocalDate joinDate = LocalDate.now();
 
-    private Member.MembershipStatus membershipStatus;
+    @Builder.Default
+    private Member.MembershipStatus membershipStatus = Member.MembershipStatus.Active;
 
-    private Member.MembershipType membershipType;
+    @Builder.Default
+    private Member.MembershipType membershipType = Member.MembershipType.FullMember;
 
-    // Contact & Personal
+    // ==================== Contact & Personal ====================
+
     private String avatarUrl;
 
     @Size(max = 500, message = "Address must not exceed 500 characters")
     private String address;
 
-    private String city;
+    @Builder.Default
+    private String city = "Da Nang";
 
     private String emergencyContact;
 
     private String emergencyPhone;
 
-    // Professional
-    private String occupation;
+    // ==================== Social Media ====================
 
-    private String company;
+    @Pattern(regexp = "^(https?://)?(www\\.)?(facebook|fb)\\.com/.*$",
+            message = "Facebook URL must be valid")
+    private String facebookUrl;
 
-    @Pattern(regexp = "^(https?://)?([\\w]+\\.)?linkedin\\.com/.*$",
-            message = "LinkedIn URL must be valid")
-    private String linkedinUrl;
+    // ==================== Metadata ====================
 
-    // Metadata
     private String notes;
 
     private List<String> tags;

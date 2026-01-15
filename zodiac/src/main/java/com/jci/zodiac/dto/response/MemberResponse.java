@@ -11,13 +11,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * DTO for member response
+ * DTO for full member response (Member Detail Page)
+ * Contains all member information including computed fields
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class MemberResponse {
+
+    // ==================== Basic Information ====================
 
     private Long id;
     private String memberCode;
@@ -26,39 +29,56 @@ public class MemberResponse {
     private String phone;
     private LocalDate dateOfBirth;
 
-    // Zodiac Info
-    private String zodiacSign;
-    private String zodiacElement;
-    private String zodiacSymbol;
+    // ==================== Zodiac Information ====================
 
-    // JCI Specific
+    private String zodiacSign;          // Enum name as String
+    private String zodiacElement;       // Enum name as String
+    private String zodiacSymbol;        // e.g., "♐"
+    private String zodiacDateRange;     // e.g., "Nov 22 - Dec 21"
+    private String elementSymbol;       // e.g., "🔥"
+
+    // ==================== JCI Specific ====================
+
     private String position;
     private Long departmentId;
-    private String departmentName; // Will be populated if department exists
+    private String departmentName;      // Populated from Department entity
+    private String departmentCode;      // e.g., "TRAINING"
     private LocalDate joinDate;
-    private String membershipStatus;
-    private String membershipType;
+    private String membershipStatus;    // Enum name as String
+    private String membershipType;      // Enum name as String
 
-    // Contact & Personal
+    // ==================== Contact & Personal ====================
+
     private String avatarUrl;
     private String address;
     private String city;
     private String emergencyContact;
     private String emergencyPhone;
 
-    // Professional
-    private String occupation;
-    private String company;
-    private String linkedinUrl;
+    // ==================== Social Media ====================
 
-    // Metadata
+    private String facebookUrl;
+
+    // ==================== Metadata ====================
+
     private String notes;
     private List<String> tags;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long createdBy;
 
-    // Computed Fields
+    // ==================== Computed Fields ====================
+
     private Integer age;
     private Long daysSinceJoined;
     private Boolean isActive;
+    private Boolean isBirthdayToday;
+    private Integer daysUntilBirthday;
+
+    // ==================== Zodiac Profile Preview ====================
+    // Basic personality traits for quick view
+
+    private List<String> personalityTraits;  // Top 3-5 traits from ZodiacProfile
+    private List<String> strengths;          // Top 3-5 strengths
+    private String elementDescription;       // "Fire signs are passionate and dynamic"
 }

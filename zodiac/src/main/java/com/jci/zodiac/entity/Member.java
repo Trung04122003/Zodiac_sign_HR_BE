@@ -79,7 +79,7 @@ public class Member {
     @Builder.Default
     private MembershipType membershipType = MembershipType.FullMember;
 
-    // ==================== Contact & Personal Info ====================
+    // ==================== Contact & Personal ====================
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
@@ -97,18 +97,15 @@ public class Member {
     @Column(name = "emergency_phone", length = 20)
     private String emergencyPhone;
 
-    // ==================== Professional Info ====================
+// ==================== Social Media & Organization ====================
 
-    @Column(length = 100)
-    private String occupation;
+    @Column(name = "facebook_url", length = 200)
+    private String facebookUrl;
 
     @Column(length = 100)
     private String company;
 
-    @Column(name = "linkedin_url", length = 200)
-    private String linkedinUrl;
-
-    // ==================== Metadata ====================
+// ==================== Metadata ====================
 
     @Column(columnDefinition = "TEXT")
     private String notes;
